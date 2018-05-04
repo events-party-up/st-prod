@@ -6,7 +6,9 @@ module.exports.isLogged = (req,res,next) => {
   let token = req.headers['authorization'];
   if (token) {
     token = token.substring(7);
+    console.log('Token: ' +token);
     jwt.verify(token, config.JWT_SECRET, function(err, decoded) {
+      console.log('Decoded: ' +decoded);
         if (err) {
             return res.json({
               success: false,
