@@ -117,6 +117,7 @@ router.delete('/:id', auth.isLogged, auth.isAdmin, (req, res) => {
 
 //validatinta useri
 router.post('/validate', auth.isLogged, (req, res) => {
+  console.log(req.uid);
   User.getById(req.uid, (err, user) => {
     if (err || !user) {
       res.json({
