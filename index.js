@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const morgan = require('morgan');
 const index = require('./routes/index');
 const config = require('./config');
+const path = require('path');
 
 // Database connection
 mongoose.connect(config.DATABASE);
@@ -31,3 +32,5 @@ app.listen(config.PORT, function () {
 });
 
 app.use('/api', index);
+
+app.use(express.static(__dirname + '/build'));
