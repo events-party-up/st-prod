@@ -8,7 +8,7 @@ module.exports.isLogged = (req,res,next) => {
     token = token.substring(7);
     console.log('Token: ' +token);
     jwt.verify(token, config.JWT_SECRET, function(err, decoded) {
-      console.log('Decoded: ' +decoded.uid);
+      console.log('Decoded: ' +JSON.stringify(decoded));
       console.log('error: ' +err);
         if (err) {
             return res.json({
