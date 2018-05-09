@@ -33,7 +33,15 @@ const EventSchema = mongoose.Schema({
 const Event = module.exports = mongoose.model('Event', EventSchema);
 
 module.exports.getById = function(id, callback) {
-  Event.findById(id, callback);
+  Event.findById(id, callback)
+  .populate({
+    model: 'Division',
+    path: 'division',
+    populate: {
+      path: 'league',
+      model: 'League'
+    }
+  });
 }
 
 module.exports.getAll = function(callback) {

@@ -8,6 +8,7 @@ const teams = require('./teams')
 const divisions = require('./divisions')
 const matches = require('./matches')
 const events = require('./events')
+const teamregs = require('./teamregs')
 
 router.use('/leagues', leagues);
 router.use('/users', users);
@@ -16,5 +17,6 @@ router.use('/teams', teams);
 router.use('/divisions', divisions);
 router.use('/matches', matches);
 router.use('/events', events);
+router.use('/teamregs', teamregs);
 
 module.exports = router;

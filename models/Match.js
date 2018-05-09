@@ -166,6 +166,14 @@ module.exports.getByDivisionId = function (id, callback) {
     'division': id
   }, callback)
     .populate({
+      model: 'Division',
+      path: 'division',
+      populate: {
+        path: 'league',
+        model: 'League'
+      }
+    })
+    .populate({
       model: 'Team',
       path: 'home.team',
       populate: {
@@ -193,12 +201,36 @@ module.exports.getByDivisionId = function (id, callback) {
 module.exports.getAll = function (callback) {
   Match.find(callback)    
   .populate({
+    model: 'Player',
+    path: 'pvp.home.player',
+  })
+  .populate({
+    model: 'Player',
+    path: 'pvp.away.player',
+  })
+  .populate({
     model: 'Division',
     path: 'division',
     populate: {
       path: 'league',
       model: 'League'
     }
+  })
+  .populate({
+    model: 'Team',
+    path: 'home.team'
+  })
+  .populate({
+    model: 'Team',
+    path: 'away.team'
+  })
+  .populate({
+    model: 'Player',
+    path: 'home.player'
+  })
+  .populate({
+    model: 'Player',
+    path: 'away.player'
   });
 }
 

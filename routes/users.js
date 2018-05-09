@@ -42,7 +42,6 @@ router.post('/auth', (req, res) => {
           if (isMatch) {
             user.password = undefined;
             user.created = undefined;
-            console.log('user: ' + JSON.stringify(user));
             const token = 'Bearer ' + jwt.sign({ uid: user._id }, config.JWT_SECRET, {
               expiresIn: 604800 // 1 week
             });
