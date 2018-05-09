@@ -35,6 +35,10 @@ const MatchSchema = mongoose.Schema({
           type: mongoose.Schema.Types.ObjectId,
           ref: 'Player'
         },
+        player2: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Player'
+        },
         rating: {
           type: Number,
           default: 0
@@ -42,6 +46,10 @@ const MatchSchema = mongoose.Schema({
       },
       away: {
         player: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Player'
+        },
+        player2: {
           type: mongoose.Schema.Types.ObjectId,
           ref: 'Player'
         },
@@ -69,6 +77,14 @@ module.exports.getById = function (id, callback) {
   .populate({
     model: 'Player',
     path: 'pvp.away.player',
+  })
+  .populate({
+    model: 'Player',
+    path: 'pvp.home.player2',
+  })
+  .populate({
+    model: 'Player',
+    path: 'pvp.away.player2',
   })
   .populate({
     model: 'Division',
@@ -107,6 +123,14 @@ module.exports.getByTeamId = function (id, callback) {
       path: 'pvp.away.player',
     })
     .populate({
+      model: 'Player',
+      path: 'pvp.home.player2',
+    })
+    .populate({
+      model: 'Player',
+      path: 'pvp.away.player2',
+    })
+    .populate({
       model: 'Team',
       path: 'home.team',
     })
@@ -133,6 +157,14 @@ module.exports.getByPlayerId = function (id, callback) {
     .populate({
       model: 'Player',
       path: 'pvp.away.player',
+    })
+    .populate({
+      model: 'Player',
+      path: 'pvp.home.player2',
+    })
+    .populate({
+      model: 'Player',
+      path: 'pvp.away.player2',
     })
     .populate({
       model: 'Division',
@@ -207,6 +239,14 @@ module.exports.getAll = function (callback) {
   .populate({
     model: 'Player',
     path: 'pvp.away.player',
+  })
+  .populate({
+    model: 'Player',
+    path: 'pvp.home.player2',
+  })
+  .populate({
+    model: 'Player',
+    path: 'pvp.away.player2',
   })
   .populate({
     model: 'Division',

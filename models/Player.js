@@ -37,6 +37,10 @@ const PlayerSchema = mongoose.Schema({
   gender: {
     type: String,
     required: true
+  },
+  inTeam: {
+    type: Boolean,
+    default: false
   }
 });
 
@@ -48,6 +52,10 @@ module.exports.getById = function(id, callback) {
 
 module.exports.getAll = function(callback) {
   Player.find(callback);
+}
+
+module.exports.getFree = function(callback) {
+  Player.find({ "inTeam": false }, callback);
 }
 
 module.exports.create = function(newPlayer, callback) {

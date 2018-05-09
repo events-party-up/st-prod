@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Promise = require('bluebird');
 
-const Player = require('../models/Player')
+const Player = require('../models/Player');
+const Team = require('../models/Team');
 const Match = require('../models/Match');
 const auth = require('../middlewares/auth');
 const config = require('../config');
@@ -42,6 +43,19 @@ router.get('/', (req, res) => {
   })
 });
 
+router.get('/free', (req, res) => {
+  Player.getFree((err, players) => {
+    if (err) res.json({
+      success: false,
+      message: err
+    });
+    res.json({
+      success: true,
+      players: players
+    });
+  })
+});
+
 router.get('/ratings/calculate', auth.isLogged, (req, res) => {
   calcRatings((err, updated) => {
     if (err) {
@@ -56,6 +70,48 @@ router.get('/ratings/calculate', auth.isLogged, (req, res) => {
         updated: updated
       });
     }
+  })
+});
+
+router.get('/fixbool', (req, res) => {
+  let count = 0;
+  Player.getAll((err, players) => {
+    if(err) res.json({
+        success: true
+      });
+    players.forEach(player => {
+      Team.getAll((err, teams) => {
+        if(err) res.json({
+          success: true
+        });
+        let team_count = 0;
+        teams.forEach(team => {
+          tp_count = 0;
+          team.players.forEach(item => {
+            if (item._id === player._id) {
+              player.inTeam = true;
+              Player.update(player, (err, pl) => {
+                if(err) res.json({
+                  success: true
+                });
+              });
+            }
+            tp_count++;
+            if(tp_count === team.players.length) {
+              team_count++
+            }
+          })
+          if(team_count === teams.length){
+            count++;
+          }
+        })
+      })
+      if (count === players) {
+        res.json({
+          success: true
+        });
+      }
+    });
   })
 });
 
@@ -90,18 +146,18 @@ function calcRatings(callback) {
       let matchesProcessed = 0;
       matches.forEach(match => {
         let rate = 1;
-        if(match.division.league.rate) rate = match.division.league.rate;
+        if (match.division.league.rate) rate = match.division.league.rate;
         match.pvp.forEach((item, index) => {
-          let home_player = players.findIndex(x => item.home ? (x._id.toString() === item.home.player.toString()) 
-          : (match.home.player && x._id.toString() === match.home.player.toString()));
-          let away_player = players.findIndex(x => item.away ? (x._id.toString() === item.away.player.toString()) 
-          : (match.away.player && x._id.toString() === match.away.player.toString()));
-          if (home_player != -1 && away_player != -1 
-            && !home_player.foreigner 
+          let home_player = players.findIndex(x => item.home ? (x._id.toString() === item.home.player.toString())
+            : (match.home.player && x._id.toString() === match.home.player.toString()));
+          let away_player = players.findIndex(x => item.away ? (x._id.toString() === item.away.player.toString())
+            : (match.away.player && x._id.toString() === match.away.player.toString()));
+          if (home_player != -1 && away_player != -1
+            && !home_player.foreigner
             && !away_player.foreginer) {
-              if(match.division.league.tournament && !match.division.league.official) {
-                return;
-              }
+            if (match.division.league.tournament && !match.division.league.official) {
+              return;
+            }
             let hp_fp = players[home_player].initial_points + players[home_player].points;
             let ap_fp = players[away_player].initial_points + players[away_player].points;
             Match.whoWonPvp(item, (home, away) => {
