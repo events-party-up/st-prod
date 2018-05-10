@@ -41,7 +41,8 @@ const PlayerSchema = mongoose.Schema({
   inTeam: {
     type: Boolean,
     default: false
-  }
+  },
+  license: String
 });
 
 const Player = module.exports = mongoose.model('Player', PlayerSchema);
