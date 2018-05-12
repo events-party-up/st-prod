@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const async = require('async');
 
 const Division = require('../models/Division');
 const Match = require('../models/Match');
@@ -95,17 +96,17 @@ function calcStats(team, division_id, callback) {
   team.points_lost = 0;
   Match.getAll((err, matches) => {
     if (err) {
-      callback(err);
+      callback(err, null);
     }
     else {
-      matches.forEach(match => {
-        if (division_id.toString() === match.division._id.toString() && (match.home.team.toString() === team._id.toString() || match.away.team.toString() === team._id.toString())) {
+      async.each(matches, (match, done) => {
+        if (division_id.toString() === match.division._id.toString() && (match.home.team._id.toString() === team._id.toString() || match.away.team._id.toString() === team._id.toString())) {
           if (match.absent && match.absent !== '-1') {
-            if (match.home.team.toString() === team._id.toString() && match.away.team.toString() === match.absent) {
+            if (match.home.team._id.toString() === team._id.toString() && match.away.team._id.toString() === match.absent) {
               team.won++;
               team.points += 2;
             }
-            else if (match.away.team.toString() === team._id.toString() && match.home.team.toString() === match.absent) {
+            else if (match.away.team._id.toString() === team._id.toString() && match.home.team._id.toString() === match.absent) {
               team.won++;
               team.points += 2;
             }
@@ -118,11 +119,11 @@ function calcStats(team, division_id, callback) {
             Match.calcScore(match, (updatedMatch) => {
               if (match.finished) {
                 team.played++;
-                if ((updatedMatch.home.team.toString() === team._id.toString()) && updatedMatch.home.score > updatedMatch.away.score) {
+                if ((updatedMatch.home.team._id.toString() === team._id.toString()) && updatedMatch.home.score > updatedMatch.away.score) {
                   team.won++;
                   team.points += 2;
                 }
-                else if ((updatedMatch.away.team.toString() === team._id.toString()) && updatedMatch.away.score > updatedMatch.home.score) {
+                else if ((updatedMatch.away.team._id.toString() === team._id.toString()) && updatedMatch.away.score > updatedMatch.home.score) {
                   team.won++;
                   team.points += 2;
                 }
@@ -130,20 +131,22 @@ function calcStats(team, division_id, callback) {
                   team.lost++;
                   team.points++;
                 }
-                if (updatedMatch.home.team.toString() === team._id.toString()) {
+                if (updatedMatch.home.team._id.toString() === team._id.toString()) {
                   team.points_lost += updatedMatch.away.score;
                   team.points_won += updatedMatch.home.score;
                 }
-                else if (updatedMatch.away.team.toString() === team._id.toString()) {
+                else if (updatedMatch.away.team._id.toString() === team._id.toString()) {
                   team.points_lost += updatedMatch.home.score;
                   team.points_won += updatedMatch.away.score;
                 }
               }
-            })
+            });
           }
         }
+        done();
+      }, err => {
+        callback(err, team);
       });
-      callback(err, team);
     }
   });
 }
@@ -160,7 +163,7 @@ function calcTournamentStats(player, division_id, callback) {
       callback(err);
     }
     else {
-      matches.forEach(match => {
+      async.each(matches, (match, done) => {
         if (division_id.toString() === match.division._id.toString() && (match.home.player.toString() === player._id.toString() || match.away.player.toString() === player._id.toString())) {
           if (match.absent && match.absent !== '-1') {
             if (match.home.player.toString() === player._id.toString() && match.away.player.toString() === match.absent) {
@@ -204,57 +207,67 @@ function calcTournamentStats(player, division_id, callback) {
             })
           }
         }
+        done();
+      }, err => {
+        callback(err, team);
       });
-      callback(err, player);
     }
+  });
+}
+
+processDivisions = (divisions, callback) => {
+  async.each(divisions, (division, done) => {
+    if (division.tournament) {
+      async.each(division.players, (player, inner_done) => {
+        calcTournamentStats(player, division._id, (err, result) => {
+          if(result) {
+            player = result;
+          }
+          inner_done();
+        });
+      }, err => {
+        if(!err) done();
+      });
+    }
+    else {
+      async.each(division.teams, (team, inner_done) => {
+        calcStats(team, division._id, (err, result) => {
+          if(result) {
+            team = result;
+          }
+          inner_done();
+        });
+      }, err => {
+        if(!err) done();
+      });
+    }
+  }, err => {
+    if(!err) callback(divisions);
   });
 }
 
 router.get('/byleague/:id', (req, res) => {
   Division.getByLeagueId(req.params.id, (err, divisions) => {
-    let count = 0;
     if (err) {
       res.json({
         success: false,
         message: err
       });
     } else {
-      if (divisions.length === 0) res.json({
-        success: true,
-        all: []
-      });
-      divisions.forEach((division, dindex) => {
-        count++;
-        inner_count = 0;
-        if (division.tournament) {
-          division.players.forEach((player, index) => {
-            calcTournamentStats(player, division._id, (err, result) => {
-              inner_count++;
-              divisions[dindex].players[index] = result;
-              if (count === divisions.length && inner_count === division.players.length) {
-                res.json({
-                  success: true,
-                  all: divisions
-                });
-              }
-            });
+      if (divisions.length === 0) {
+        res.json({
+          success: true,
+          all: []
+        });
+      }
+      else {
+        processDivisions(divisions, divisions => {
+          res.json({
+            success: true,
+            all: divisions
           });
-        }
-        else {
-          division.teams.forEach((team, index) => {
-            calcStats(team, division._id, (err, result) => {
-              inner_count++;
-              divisions[dindex].teams[index] = result;
-              if (count === divisions.length && inner_count === division.teams.length) {
-                res.json({
-                  success: true,
-                  all: divisions
-                });
-              }
-            });
-          });
-        }
-      });
+        });
+      }
     }
   })
 });
