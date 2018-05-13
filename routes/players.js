@@ -76,12 +76,12 @@ router.get('/ratings/calculate', auth.isLogged, (req, res) => {
 router.get('/fixbool', (req, res) => {
   let count = 0;
   Player.getAll((err, players) => {
-    if(err) res.json({
-        success: true
-      });
+    if (err) res.json({
+      success: true
+    });
     players.forEach(player => {
       Team.getAll((err, teams) => {
-        if(err) res.json({
+        if (err) res.json({
           success: true
         });
         let team_count = 0;
@@ -91,17 +91,17 @@ router.get('/fixbool', (req, res) => {
             if (item._id === player._id) {
               player.inTeam = true;
               Player.update(player, (err, pl) => {
-                if(err) res.json({
+                if (err) res.json({
                   success: true
                 });
               });
             }
             tp_count++;
-            if(tp_count === team.players.length) {
+            if (tp_count === team.players.length) {
               team_count++
             }
           })
-          if(team_count === teams.length){
+          if (team_count === teams.length) {
             count++;
           }
         })
@@ -148,69 +148,87 @@ function calcRatings(callback) {
         let rate = 1;
         if (match.division.league.rate) rate = match.division.league.rate;
         match.pvp.forEach((item, index) => {
-          let home_player = players.findIndex(x => item.home ? (x._id.toString() === item.home.player.toString())
-            : (match.home.player && x._id.toString() === match.home.player.toString()));
-          let away_player = players.findIndex(x => item.away ? (x._id.toString() === item.away.player.toString())
-            : (match.away.player && x._id.toString() === match.away.player.toString()));
-          if (home_player != -1 && away_player != -1
-            && !home_player.foreigner
-            && !away_player.foreginer) {
-            if (match.division.league.tournament && !match.division.league.official) {
-              return;
+          if (!item.home.player2 && !item.away.player2) {
+            let home_player = players.findIndex(x => item.home ? (x._id.toString() === item.home.player._id.toString())
+              : (match.home.player && x._id.toString() === match.home.player._id.toString()));
+            let away_player = players.findIndex(x => item.away ? (x._id.toString() === item.away.player._id.toString())
+              : (match.away.player && x._id.toString() === match.away.player._id.toString()));
+            if (home_player != -1 && away_player != -1
+              && !home_player.foreigner
+              && !away_player.foreginer) {
+              if (match.division.league.tournament && !match.division.league.official) {
+                return;
+              }
+              let hp_fp = players[home_player].initial_points + players[home_player].points;
+              let ap_fp = players[away_player].initial_points + players[away_player].points;
+              Match.whoWonPvp(item, (home, away) => {
+                if (home) {
+                  if (hp_fp > ap_fp) {
+                    let diff = hp_fp - ap_fp;
+                    console.log(diff);
+                    config.STRONGER_DIFF.forEach(option => {
+                      if (option.max >= diff && option.min <= diff) {
+                        match.pvp[index].home.prev_rating = players[home_player].initial_points + players[home_player].points;
+                        match.pvp[index].away.prev_rating = players[away_player].initial_points + players[away_player].points;
+
+                        players[home_player].points += option.win_points * rate;
+                        players[away_player].points -= option.lost_points * rate;
+                    
+                        match.pvp[index].home.rating = players[home_player].initial_points + players[home_player].points;
+                        match.pvp[index].away.rating = players[away_player].initial_points + players[away_player].points;
+                      }
+                    });
+                  }
+                  else {
+                    let diff = ap_fp - hp_fp;
+                    config.WEAKER_DIFF.forEach(option => {
+                      if (option.max >= diff && option.min <= diff) {
+                        match.pvp[index].home.prev_rating = players[home_player].initial_points + players[home_player].points;
+                        match.pvp[index].away.prev_rating = players[away_player].initial_points + players[away_player].points;
+
+                        players[home_player].points += option.win_points * rate;
+                        players[away_player].points -= option.lost_points * rate;
+                    
+                        match.pvp[index].home.rating = players[home_player].initial_points + players[home_player].points;
+                        match.pvp[index].away.rating = players[away_player].initial_points + players[away_player].points;
+                      }
+                    });
+                  }
+                }
+                else {
+                  if (ap_fp > hp_fp) {
+                    let diff = ap_fp - hp_fp;
+                    config.STRONGER_DIFF.forEach(option => {
+                      if (option.max >= diff && option.min <= diff) {
+                        match.pvp[index].away.prev_rating = players[away_player].initial_points + players[away_player].points;
+                        match.pvp[index].home.prev_rating = players[home_player].initial_points + players[home_player].points;
+                      
+                        players[away_player].points += option.win_points * rate;
+                        players[home_player].points -= option.lost_points * rate;
+                    
+                        match.pvp[index].away.rating = players[away_player].initial_points + players[away_player].points;
+                        match.pvp[index].home.rating = players[home_player].initial_points + players[home_player].points;
+                      }
+                    });
+                  }
+                  else {
+                    let diff = hp_fp - ap_fp;
+                    config.WEAKER_DIFF.forEach(option => {
+                      if (option.max >= diff && option.min <= diff) {
+                        match.pvp[index].away.prev_rating = players[away_player].initial_points + players[away_player].points;
+                        match.pvp[index].home.prev_rating = players[home_player].initial_points + players[home_player].points;
+                      
+                        players[away_player].points += option.win_points * rate;
+                        players[home_player].points -= option.lost_points * rate;
+                    
+                        match.pvp[index].away.rating = players[away_player].initial_points + players[away_player].points;
+                        match.pvp[index].home.rating = players[home_player].initial_points + players[home_player].points;
+                      }
+                    });
+                  }
+                }
+              });
             }
-            let hp_fp = players[home_player].initial_points + players[home_player].points;
-            let ap_fp = players[away_player].initial_points + players[away_player].points;
-            Match.whoWonPvp(item, (home, away) => {
-              if (home) {
-                if (hp_fp > ap_fp) {
-                  let diff = hp_fp - ap_fp;
-                  console.log(diff);
-                  config.STRONGER_DIFF.forEach(option => {
-                    if (option.max >= diff && option.min <= diff) {
-                      players[home_player].points += option.win_points * rate;
-                      players[away_player].points -= option.lost_points * rate;
-                      match.pvp[index].home.rating += option.win_points * rate;
-                      match.pvp[index].away.rating -= option.lost_points * rate;
-                    }
-                  });
-                }
-                else {
-                  let diff = ap_fp - hp_fp;
-                  config.WEAKER_DIFF.forEach(option => {
-                    if (option.max >= diff && option.min <= diff) {
-                      players[home_player].points += option.win_points * rate;
-                      players[away_player].points -= option.lost_points * rate;
-                      match.pvp[index].home.rating += option.win_points * rate;
-                      match.pvp[index].away.rating -= option.lost_points * rate;
-                    }
-                  });
-                }
-              }
-              else {
-                if (ap_fp > hp_fp) {
-                  let diff = ap_fp - hp_fp;
-                  config.STRONGER_DIFF.forEach(option => {
-                    if (option.max >= diff && option.min <= diff) {
-                      players[away_player].points += option.win_points * rate;
-                      players[home_player].points -= option.lost_points * rate;
-                      match.pvp[index].away.rating += option.win_points * rate;
-                      match.pvp[index].home.rating -= option.lost_points * rate;
-                    }
-                  });
-                }
-                else {
-                  let diff = hp_fp - ap_fp;
-                  config.WEAKER_DIFF.forEach(option => {
-                    if (option.max >= diff && option.min <= diff) {
-                      players[away_player].points += option.win_points * rate;
-                      players[home_player].points -= option.lost_points * rate;
-                      match.pvp[index].away.rating += option.win_points * rate;
-                      match.pvp[index].home.rating -= option.lost_points * rate;
-                    }
-                  });
-                }
-              }
-            });
           }
         });
         console.log(match.pvp);

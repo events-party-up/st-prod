@@ -43,6 +43,10 @@ const MatchSchema = mongoose.Schema({
           type: Number,
           default: 0
         },
+        prev_rating: {
+          type: Number,
+          default: 0
+        }
       },
       away: {
         player: {
@@ -57,6 +61,10 @@ const MatchSchema = mongoose.Schema({
           type: Number,
           default: 0
         },
+        prev_rating: {
+          type: Number,
+          default: 0
+        }
       },
       score: String
     }
@@ -292,18 +300,19 @@ module.exports.whoWonPvp = function (item, callback) {
   result.forEach(item => {
     let parse = item.split('-');
     if (parseInt(parse[0]) > parseInt(parse[1])) home_round++;
-    else away_round++;
+    else if (parseInt(parse[0]) < parseInt(parse[1])) away_round++;
   });
-  callback((home_round > away_round), home_round < away_round)
+  if(home_round === 0 && away_round === 0) callback(false, false, true);
+  else callback((home_round > away_round), home_round < away_round);
 }
 
 module.exports.calcScore = function (match, callback) {
   let homeTeam_points = 0, awayTeam_points = 0;
   match.pvp.forEach(item => {
     let home_round = 0, away_round = 0;
-    Match.whoWonPvp(item, (home, away) => {
+    Match.whoWonPvp(item, (home, away, draw) => {
       if (home) homeTeam_points++;
-      else awayTeam_points++
+      else if(away) awayTeam_points++;
     });
   });
   match.home.score = homeTeam_points;

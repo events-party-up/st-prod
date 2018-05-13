@@ -32,10 +32,6 @@ const DivisionSchema = mongoose.Schema({
     type: Boolean,
     default: false
   },
-  rate: {
-    type: Number,
-    default: 1
-  },
   duo: {
     type: Boolean,
     default: false

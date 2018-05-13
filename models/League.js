@@ -16,7 +16,11 @@ const LeagueSchema = mongoose.Schema({
   official: {
     type: Boolean,
     default: false
-  }
+  },
+  rate: {
+    type: Number,
+    default: 1
+  },
 })
 
 const League = module.exports = mongoose.model('League', LeagueSchema);
