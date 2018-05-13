@@ -148,14 +148,12 @@ function calcRatings(callback) {
         let rate = 1;
         if (match.division.league.rate) rate = match.division.league.rate;
         match.pvp.forEach((item, index) => {
-          if (!item.home.player2 && !item.away.player2) {
+          if (!item.home.player2 && !item.away.player2 && !item.home.player.foreigner && !item.away.player.foreigner) {
             let home_player = players.findIndex(x => item.home ? (x._id.toString() === item.home.player._id.toString())
               : (match.home.player && x._id.toString() === match.home.player._id.toString()));
             let away_player = players.findIndex(x => item.away ? (x._id.toString() === item.away.player._id.toString())
               : (match.away.player && x._id.toString() === match.away.player._id.toString()));
-            if (home_player != -1 && away_player != -1
-              && !home_player.foreigner
-              && !away_player.foreginer) {
+            if (home_player != -1 && away_player != -1) {
               if (match.division.league.tournament && !match.division.league.official) {
                 return;
               }
