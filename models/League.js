@@ -20,7 +20,7 @@ const LeagueSchema = mongoose.Schema({
   rate: {
     type: Number,
     default: 1
-  },
+  }
 })
 
 const League = module.exports = mongoose.model('League', LeagueSchema);

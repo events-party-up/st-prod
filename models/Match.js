@@ -239,7 +239,8 @@ module.exports.getByDivisionId = function (id, callback) {
 }
 
 module.exports.getAll = function (callback) {
-  Match.find(callback)    
+  Match.find(callback)
+  .sort({date: -1})   
   .populate({
     model: 'Player',
     path: 'pvp.home.player',

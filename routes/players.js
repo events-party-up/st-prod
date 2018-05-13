@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Promise = require('bluebird');
+const async = require('async');
 
 const Player = require('../models/Player');
 const Team = require('../models/Team');
@@ -57,7 +58,7 @@ router.get('/free', (req, res) => {
 });
 
 router.get('/ratings/calculate', auth.isLogged, (req, res) => {
-  calcRatings((err, updated) => {
+  calcRatings(err => {
     if (err) {
       res.json({
         success: false,
@@ -66,8 +67,7 @@ router.get('/ratings/calculate', auth.isLogged, (req, res) => {
     }
     else {
       res.json({
-        success: true,
-        updated: updated
+        success: true
       });
     }
   })
@@ -143,125 +143,79 @@ function calcRatings(callback) {
     })
     Match.getAll((err, matches) => {
       if (err) callback(err, null);
-      let matchesProcessed = 0;
-      matches.forEach(match => {
-        let rate = 1;
-        if (match.division.league.rate) rate = match.division.league.rate;
-        match.pvp.forEach((item, index) => {
-          if (!item.home.player2 && !item.away.player2 && !item.home.player.foreigner && !item.away.player.foreigner) {
+      async.eachSeries(matches, (match, match_done) => {
+        let rate = match.division.league.rate || 1;
+        if (match.division.league.tournament && !match.division.league.official) {
+          return match_done();
+        }
+        async.eachOfSeries(match.pvp, (item, index, pvp_done) => {
+          match.pvp[index].home.prev_rating = 0;
+          match.pvp[index].away.prev_rating = 0;
+          match.pvp[index].home.rating = 0;
+          match.pvp[index].away.rating = 0;
+          if (!item.home.player2 && !item.away.player2) {
             let home_player = players.findIndex(x => item.home ? (x._id.toString() === item.home.player._id.toString())
               : (match.home.player && x._id.toString() === match.home.player._id.toString()));
             let away_player = players.findIndex(x => item.away ? (x._id.toString() === item.away.player._id.toString())
               : (match.away.player && x._id.toString() === match.away.player._id.toString()));
             if (home_player != -1 && away_player != -1) {
-              if (match.division.league.tournament && !match.division.league.official) {
-                return;
-              }
               let hp_fp = players[home_player].initial_points + players[home_player].points;
               let ap_fp = players[away_player].initial_points + players[away_player].points;
               Match.whoWonPvp(item, (home, away) => {
-                if (home) {
-                  if (hp_fp > ap_fp) {
-                    let diff = hp_fp - ap_fp;
-                    console.log(diff);
-                    config.STRONGER_DIFF.forEach(option => {
-                      if (option.max >= diff && option.min <= diff) {
-                        match.pvp[index].home.prev_rating = players[home_player].initial_points + players[home_player].points;
-                        match.pvp[index].away.prev_rating = players[away_player].initial_points + players[away_player].points;
+                  let WIN_SIDE = home ? 'home' : 'away';
+                  let WIN_INDEX = home ? home_player : away_player;
+                  let LOSE_INDEX = home ? away_player : home_player;
+                  let LOSE_SIDE = home ? 'away' : 'home';
+                  let isStronger = hp_fp > ap_fp;
+                  let diff = isStronger ? hp_fp - ap_fp : ap_fp - hp_fp;
+                  let OPTION = isStronger ? 'STRONGER_DIFF' : 'WEAKER_DIFF';
 
-                        players[home_player].points += option.win_points * rate;
-                        players[away_player].points -= option.lost_points * rate;
-                    
-                        match.pvp[index].home.rating = players[home_player].initial_points + players[home_player].points;
-                        match.pvp[index].away.rating = players[away_player].initial_points + players[away_player].points;
-                      }
-                    });
-                  }
-                  else {
-                    let diff = ap_fp - hp_fp;
-                    config.WEAKER_DIFF.forEach(option => {
-                      if (option.max >= diff && option.min <= diff) {
-                        match.pvp[index].home.prev_rating = players[home_player].initial_points + players[home_player].points;
-                        match.pvp[index].away.prev_rating = players[away_player].initial_points + players[away_player].points;
+                  config[OPTION].forEach(result => {
+                    if (result.max >= diff && result.min <= diff) {
+                      match.pvp[index][WIN_SIDE].prev_rating = players[WIN_INDEX].initial_points + players[WIN_INDEX].points;
+                      match.pvp[index][LOSE_SIDE].prev_rating = players[LOSE_INDEX].initial_points + players[LOSE_INDEX].points;
 
-                        players[home_player].points += option.win_points * rate;
-                        players[away_player].points -= option.lost_points * rate;
-                    
-                        match.pvp[index].home.rating = players[home_player].initial_points + players[home_player].points;
-                        match.pvp[index].away.rating = players[away_player].initial_points + players[away_player].points;
+                      if(!item.home.player.foreigner && !item.away.player.foreigner) {
+                        players[WIN_INDEX].points += result.win_points * rate;
+                        players[LOSE_INDEX].points -= result.lost_points * rate;
                       }
-                    });
-                  }
-                }
-                else {
-                  if (ap_fp > hp_fp) {
-                    let diff = ap_fp - hp_fp;
-                    config.STRONGER_DIFF.forEach(option => {
-                      if (option.max >= diff && option.min <= diff) {
-                        match.pvp[index].away.prev_rating = players[away_player].initial_points + players[away_player].points;
-                        match.pvp[index].home.prev_rating = players[home_player].initial_points + players[home_player].points;
-                      
-                        players[away_player].points += option.win_points * rate;
-                        players[home_player].points -= option.lost_points * rate;
-                    
-                        match.pvp[index].away.rating = players[away_player].initial_points + players[away_player].points;
-                        match.pvp[index].home.rating = players[home_player].initial_points + players[home_player].points;
-                      }
-                    });
-                  }
-                  else {
-                    let diff = hp_fp - ap_fp;
-                    config.WEAKER_DIFF.forEach(option => {
-                      if (option.max >= diff && option.min <= diff) {
-                        match.pvp[index].away.prev_rating = players[away_player].initial_points + players[away_player].points;
-                        match.pvp[index].home.prev_rating = players[home_player].initial_points + players[home_player].points;
-                      
-                        players[away_player].points += option.win_points * rate;
-                        players[home_player].points -= option.lost_points * rate;
-                    
-                        match.pvp[index].away.rating = players[away_player].initial_points + players[away_player].points;
-                        match.pvp[index].home.rating = players[home_player].initial_points + players[home_player].points;
-                      }
-                    });
-                  }
-                }
+                  
+                      match.pvp[index][WIN_SIDE].rating = players[WIN_INDEX].initial_points + players[WIN_INDEX].points;
+                      match.pvp[index][LOSE_SIDE].rating = players[LOSE_INDEX].initial_points + players[LOSE_INDEX].points;
+                    }
+                  });
               });
             }
           }
+          pvp_done();
+        }, err => {
+          if(!err) match_done();
+          else match_done(err);
         });
-        console.log(match.pvp);
-        matchesProcessed++;
-      });
-      if (matchesProcessed === matches.length) {
-        let update_count = 0,
-          updated = 0;
-        matches.forEach(match => {
-          update_count++;
+      }, err => {
+        if(err) callback(err, null);
+        let done = false;
+        async.each(matches, (match, done) => {
           Match.update(match, (err, result) => {
-            // console.log(match.pvp);
-            if (err) {
-              callback(err, null);
-            }
-            else {
-              updated++;
-            }
+            if (err) callback(err, null);
+            done();
           });
+        }, err => {
+          if (err) callback(err, null);
+          if(done) return callback();
+          done = true;
         });
-        players.forEach(player => {
-          update_count++;
+        async.each(players, (player, done) => {
           Player.update(player, (err, pl) => {
-            if (err) {
-              callback(err, null);
-            }
-            else {
-              updated++;
-            }
+            if (err) callback(err, null);
+            done();
           });
+        }, err => {
+          if (err) callback(err, null);
+          if(done) return callback();
+          done = true;
         });
-        if (update_count === players.length + matches.length) {
-          callback(null, updated)
-        }
-      }
+      });
     })
   });
 }
