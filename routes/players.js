@@ -160,16 +160,16 @@ function calcRatings(callback) {
             let away_player = players.findIndex(x => item.away ? (x._id.toString() === item.away.player._id.toString())
               : (match.away.player && x._id.toString() === match.away.player._id.toString()));
             if (home_player != -1 && away_player != -1) {
-              let hp_fp = players[home_player].initial_points + players[home_player].points;
-              let ap_fp = players[away_player].initial_points + players[away_player].points;
+              let total_points = option => players[option].initial_points + players[option].points;
               Match.whoWonPvp(item, (home, away, draw) => {
                   let WIN_SIDE = home ? 'home' : 'away';
                   let WIN_INDEX = home ? home_player : away_player;
                   let LOSE_INDEX = home ? away_player : home_player;
                   let LOSE_SIDE = home ? 'away' : 'home';
-                  let isStronger = hp_fp > ap_fp;
+                  let isStronger = total_points(WIN_INDEX) > total_points(LOSE_INDEX);
                   let OPTION = isStronger ? 'STRONGER_DIFF' : 'WEAKER_DIFF';
-                  let diff = isStronger ? hp_fp - ap_fp : ap_fp - hp_fp;
+                  let diff = isStronger ? total_points(WIN_INDEX) - total_points(LOSE_INDEX) 
+                    : total_points(LOSE_INDEX) - total_points(WIN_INDEX);
 
                   config[OPTION].forEach(result => {
                     if (result.max >= diff && result.min <= diff) {
@@ -185,8 +185,6 @@ function calcRatings(callback) {
                       match.pvp[index][LOSE_SIDE].rating = players[LOSE_INDEX].initial_points + players[LOSE_INDEX].points;
                     }
                   });
-                  console.log(match.pvp);
-                  console.log(new Date(match.date)); 
               });
             }
           } 
