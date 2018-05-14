@@ -34,6 +34,7 @@ router.get('/', (req, res) => {
       success: false,
       message: err
     });
+    console.log(events)
     res.json({
       success: true,
       events: events

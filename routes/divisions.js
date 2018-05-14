@@ -209,7 +209,7 @@ function calcTournamentStats(player, division_id, callback) {
         }
         done();
       }, err => {
-        callback(err, team);
+        callback(err, player);
       });
     }
   });

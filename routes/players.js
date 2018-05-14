@@ -184,10 +184,12 @@ function calcRatings(callback) {
                       match.pvp[index][LOSE_SIDE].rating = players[LOSE_INDEX].initial_points + players[LOSE_INDEX].points;
                     }
                   });
+                  console.log(match.pvp);
+                  console.log(new Date(match.date)); 
               });
             }
-          }
-          pvp_done();
+          } 
+          pvp_done();                 
         }, err => {
           if(!err) match_done();
           else match_done(err);

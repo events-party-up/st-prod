@@ -69,9 +69,10 @@ const MatchSchema = mongoose.Schema({
       score: String
     }
   ],
-  date: String,
+  date: Date,
   finished: false,
-  absent: String
+  absent: String,
+  location: String
 })
 
 const Match = module.exports = mongoose.model('Match', MatchSchema);
@@ -240,7 +241,7 @@ module.exports.getByDivisionId = function (id, callback) {
 
 module.exports.getAll = function (callback) {
   Match.find(callback)
-  .sort({date: -1})   
+  .sort({date: 1})   
   .populate({
     model: 'Player',
     path: 'pvp.home.player',
