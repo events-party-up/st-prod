@@ -20,6 +20,13 @@ const DivisionSchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Player'
   }],
+  prev_points: [{
+    id: String,
+    points: {
+      type: Number,
+      default: 0
+    }
+  }],
   league: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'League'

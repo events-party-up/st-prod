@@ -79,46 +79,46 @@ const Match = module.exports = mongoose.model('Match', MatchSchema);
 
 module.exports.getById = function (id, callback) {
   Match.findById(id, callback)
-  .populate({
-    model: 'Player',
-    path: 'pvp.home.player',
-  })
-  .populate({
-    model: 'Player',
-    path: 'pvp.away.player',
-  })
-  .populate({
-    model: 'Player',
-    path: 'pvp.home.player2',
-  })
-  .populate({
-    model: 'Player',
-    path: 'pvp.away.player2',
-  })
-  .populate({
-    model: 'Division',
-    path: 'division',
-    populate: {
-      path: 'league',
-      model: 'League'
-    }
-  })
-  .populate({
-    model: 'Team',
-    path: 'home.team'
-  })
-  .populate({
-    model: 'Team',
-    path: 'away.team'
-  })
-  .populate({
-    model: 'Player',
-    path: 'home.player'
-  })
-  .populate({
-    model: 'Player',
-    path: 'away.player'
-  });
+    .populate({
+      model: 'Player',
+      path: 'pvp.home.player',
+    })
+    .populate({
+      model: 'Player',
+      path: 'pvp.away.player',
+    })
+    .populate({
+      model: 'Player',
+      path: 'pvp.home.player2',
+    })
+    .populate({
+      model: 'Player',
+      path: 'pvp.away.player2',
+    })
+    .populate({
+      model: 'Division',
+      path: 'division',
+      populate: {
+        path: 'league',
+        model: 'League'
+      }
+    })
+    .populate({
+      model: 'Team',
+      path: 'home.team'
+    })
+    .populate({
+      model: 'Team',
+      path: 'away.team'
+    })
+    .populate({
+      model: 'Player',
+      path: 'home.player'
+    })
+    .populate({
+      model: 'Player',
+      path: 'away.player'
+    });
 }
 
 module.exports.getByTeamId = function (id, callback) {
@@ -206,6 +206,23 @@ module.exports.getByDivisionId = function (id, callback) {
   Match.find({
     'division': id
   }, callback)
+    .sort({ date: 1 })
+    // .populate({
+    //   model: 'Player',
+    //   path: 'pvp.home.player',
+    // })
+    // .populate({
+    //   model: 'Player',
+    //   path: 'pvp.away.player',
+    // })
+    // .populate({
+    //   model: 'Player',
+    //   path: 'pvp.home.player2',
+    // })
+    // .populate({
+    //   model: 'Player',
+    //   path: 'pvp.away.player2',
+    // })
     .populate({
       model: 'Division',
       path: 'division',
@@ -232,56 +249,58 @@ module.exports.getByDivisionId = function (id, callback) {
     })
     .populate({
       model: 'Player',
-      path: 'home.player',
-    }).populate({
+      path: 'home.player'
+    })
+    .populate({
       model: 'Player',
-      path: 'away.player',
+      path: 'away.player'
     });
+    
 }
 
 module.exports.getAll = function (callback) {
   Match.find(callback)
-  .sort({date: 1})   
-  .populate({
-    model: 'Player',
-    path: 'pvp.home.player',
-  })
-  .populate({
-    model: 'Player',
-    path: 'pvp.away.player',
-  })
-  .populate({
-    model: 'Player',
-    path: 'pvp.home.player2',
-  })
-  .populate({
-    model: 'Player',
-    path: 'pvp.away.player2',
-  })
-  .populate({
-    model: 'Division',
-    path: 'division',
-    populate: {
-      path: 'league',
-      model: 'League'
-    }
-  })
-  .populate({
-    model: 'Team',
-    path: 'home.team'
-  })
-  .populate({
-    model: 'Team',
-    path: 'away.team'
-  })
-  .populate({
-    model: 'Player',
-    path: 'home.player'
-  })
-  .populate({
-    model: 'Player',
-    path: 'away.player'
-  });
+    .sort({ date: 1 })
+    .populate({
+      model: 'Player',
+      path: 'pvp.home.player',
+    })
+    .populate({
+      model: 'Player',
+      path: 'pvp.away.player',
+    })
+    .populate({
+      model: 'Player',
+      path: 'pvp.home.player2',
+    })
+    .populate({
+      model: 'Player',
+      path: 'pvp.away.player2',
+    })
+    .populate({
+      model: 'Division',
+      path: 'division',
+      populate: {
+        path: 'league',
+        model: 'League'
+      }
+    })
+    .populate({
+      model: 'Team',
+      path: 'home.team'
+    })
+    .populate({
+      model: 'Team',
+      path: 'away.team'
+    })
+    .populate({
+      model: 'Player',
+      path: 'home.player'
+    })
+    .populate({
+      model: 'Player',
+      path: 'away.player'
+    });
 }
 
 module.exports.create = function (newMatch, callback) {
@@ -304,7 +323,7 @@ module.exports.whoWonPvp = function (item, callback) {
     if (parseInt(parse[0]) > parseInt(parse[1])) home_round++;
     else if (parseInt(parse[0]) < parseInt(parse[1])) away_round++;
   });
-  if(home_round === 0 && away_round === 0) callback(false, false, true);
+  if (home_round === 0 && away_round === 0) callback(false, false, true);
   else callback((home_round > away_round), home_round < away_round);
 }
 
@@ -314,7 +333,7 @@ module.exports.calcScore = function (match, callback) {
     let home_round = 0, away_round = 0;
     Match.whoWonPvp(item, (home, away, draw) => {
       if (home) homeTeam_points++;
-      else if(away) awayTeam_points++;
+      else if (away) awayTeam_points++;
     });
   });
   match.home.score = homeTeam_points;

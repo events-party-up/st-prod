@@ -87,26 +87,39 @@ router.get('/:id', auth.isLogged, (req, res) => {
   })
 });
 
-function calcStats(team, division_id, callback) {
+function calcStats(item, matches, division_id, callback) {
+  let team = JSON.parse(JSON.stringify(item));
   team.points = 0;
   team.won = 0;
   team.lost = 0;
   team.played = 0;
   team.points_won = 0;
   team.points_lost = 0;
-  Match.getAll((err, matches) => {
-    if (err) {
-      callback(err, null);
-    }
-    else {
-      async.each(matches, (match, done) => {
-        if (division_id.toString() === match.division._id.toString() && (match.home.team._id.toString() === team._id.toString() || match.away.team._id.toString() === team._id.toString())) {
-          if (match.absent && match.absent !== '-1') {
-            if (match.home.team._id.toString() === team._id.toString() && match.away.team._id.toString() === match.absent) {
+  async.each(matches, (match, done) => {
+    if (division_id.toString() === match.division._id.toString() && (match.home.team._id.toString() === team._id.toString() || match.away.team._id.toString() === team._id.toString())) {
+      if (match.absent && match.absent !== '-1') {
+        if (match.home.team._id.toString() === team._id.toString() && match.away.team._id.toString() === match.absent) {
+          team.won++;
+          team.points += 2;
+        }
+        else if (match.away.team._id.toString() === team._id.toString() && match.home.team._id.toString() === match.absent) {
+          team.won++;
+          team.points += 2;
+        }
+        else {
+          team.lost++;
+          team.points++;
+        }
+      }
+      else {
+        Match.calcScore(match, (updatedMatch) => {
+          if (match.finished) {
+            team.played++;
+            if ((updatedMatch.home.team._id.toString() === team._id.toString()) && updatedMatch.home.score > updatedMatch.away.score) {
               team.won++;
               team.points += 2;
             }
-            else if (match.away.team._id.toString() === team._id.toString() && match.home.team._id.toString() === match.absent) {
+            else if ((updatedMatch.away.team._id.toString() === team._id.toString()) && updatedMatch.away.score > updatedMatch.home.score) {
               team.won++;
               team.points += 2;
             }
@@ -114,44 +127,26 @@ function calcStats(team, division_id, callback) {
               team.lost++;
               team.points++;
             }
+            if (updatedMatch.home.team._id.toString() === team._id.toString()) {
+              team.points_lost += updatedMatch.away.score;
+              team.points_won += updatedMatch.home.score;
+            }
+            else if (updatedMatch.away.team._id.toString() === team._id.toString()) {
+              team.points_lost += updatedMatch.home.score;
+              team.points_won += updatedMatch.away.score;
+            }
           }
-          else {
-            Match.calcScore(match, (updatedMatch) => {
-              if (match.finished) {
-                team.played++;
-                if ((updatedMatch.home.team._id.toString() === team._id.toString()) && updatedMatch.home.score > updatedMatch.away.score) {
-                  team.won++;
-                  team.points += 2;
-                }
-                else if ((updatedMatch.away.team._id.toString() === team._id.toString()) && updatedMatch.away.score > updatedMatch.home.score) {
-                  team.won++;
-                  team.points += 2;
-                }
-                else {
-                  team.lost++;
-                  team.points++;
-                }
-                if (updatedMatch.home.team._id.toString() === team._id.toString()) {
-                  team.points_lost += updatedMatch.away.score;
-                  team.points_won += updatedMatch.home.score;
-                }
-                else if (updatedMatch.away.team._id.toString() === team._id.toString()) {
-                  team.points_lost += updatedMatch.home.score;
-                  team.points_won += updatedMatch.away.score;
-                }
-              }
-            });
-          }
-        }
-        done();
-      }, err => {
-        callback(err, team);
-      });
+        });
+      }
     }
+    done();
+  }, err => {
+    callback(err, team);
   });
 }
 
-function calcTournamentStats(player, division_id, callback) {
+function calcTournamentStats(item, division_id, callback) {
+  let player = JSON.parse(JSON.stringify(item));
   player.points_tournament = 0;
   player.won = 0;
   player.lost = 0;
@@ -216,33 +211,40 @@ function calcTournamentStats(player, division_id, callback) {
 }
 
 processDivisions = (divisions, callback) => {
-  async.each(divisions, (division, done) => {
+  async.eachOfSeries(divisions, (division, key, done) => {
     if (division.tournament) {
-      async.each(division.players, (player, inner_done) => {
+      async.eachOfSeries(division.players, (player, index, inner_done) => {
         calcTournamentStats(player, division._id, (err, result) => {
-          if(result) {
-            player = result;
+          if (result) {
+            divisions[key].player[index] = result;
           }
           inner_done();
         });
       }, err => {
-        if(!err) done();
+        if (!err) done();
       });
     }
     else {
-      async.each(division.teams, (team, inner_done) => {
-        calcStats(team, division._id, (err, result) => {
-          if(result) {
-            team = result;
-          }
-          inner_done();
-        });
-      }, err => {
-        if(!err) done();
+      Match.getByDivisionId(division._id, (err, matches) => {
+        if (err) {
+          callback(err, null);
+        }
+        else {
+          async.eachOfSeries(division.teams, (team, index, inner_done) => {
+            calcStats(team, matches, division._id, (err, result) => {
+              if (result) {
+                divisions[key].teams[index] = result;
+              }
+              inner_done();
+            });
+          }, err => {
+            if (!err) done();
+          });
+        }
       });
     }
   }, err => {
-    if(!err) callback(divisions);
+    if (!err) callback(divisions);
   });
 }
 
@@ -262,6 +264,7 @@ router.get('/byleague/:id', (req, res) => {
       }
       else {
         processDivisions(divisions, divisions => {
+          console.log(JSON.stringify(divisions));
           res.json({
             success: true,
             all: divisions
