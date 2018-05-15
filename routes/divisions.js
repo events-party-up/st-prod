@@ -216,7 +216,7 @@ processDivisions = (divisions, callback) => {
       async.eachOfSeries(division.players, (player, index, inner_done) => {
         calcTournamentStats(player, division._id, (err, result) => {
           if (result) {
-            divisions[key].player[index] = result;
+            divisions[key].players[index] = result;
           }
           inner_done();
         });
