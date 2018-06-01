@@ -80,7 +80,7 @@ router.get('/:id', (req, res) => {
   });
 });
 
-router.get('/byleague/:id', auth.isLogged, (req, res) => {
+router.get('/byleague/:id', (req, res) => {
   Team.getByLeagueId(req.params.id, (err, teams) => {
     if (err) res.json({
       success: false,

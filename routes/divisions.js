@@ -3,6 +3,7 @@ const router = express.Router();
 const async = require('async');
 
 const Division = require('../models/Division');
+const League = require('../models/League');
 const Match = require('../models/Match');
 const auth = require('../middlewares/auth');
 
@@ -248,31 +249,37 @@ processDivisions = (divisions, callback) => {
   });
 }
 
-router.get('/byleague/:id', (req, res) => {
-  Division.getByLeagueId(req.params.id, (err, divisions) => {
-    if (err) {
-      res.json({
-        success: false,
-        message: err
-      });
-    } else {
-      if (divisions.length === 0) {
+router.get('/byleague/:id/:byseason?', (req, res) => {
+  console.log(req.params.id)
+  League.getById(req.params.id, (err, league) => {
+    Division.getByLeagueId(req.params.id, (err, divisions) => {
+      if (err) {
         res.json({
-          success: true,
-          all: []
+          success: false,
+          message: err
         });
-      }
-      else {
-        processDivisions(divisions, divisions => {
-          console.log(JSON.stringify(divisions));
+      } else {
+        if (divisions.length === 0) {
           res.json({
             success: true,
-            all: divisions
+            all: []
           });
-        });
+        }
+        else {
+          let divs = [...divisions];
+          if(league.season && req.params.byseason) {
+            divs = divisions.filter(x => x.season && x.season === league.season);
+          }
+          processDivisions(divs, divisions => {
+            res.json({
+              success: true,
+              all: divisions
+            });
+          });
+        }
       }
-    }
-  })
+    })
+  });
 });
 
 module.exports = router;

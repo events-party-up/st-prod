@@ -42,6 +42,10 @@ const DivisionSchema = mongoose.Schema({
   duo: {
     type: Boolean,
     default: false
+  },
+  season: {
+    type: Number,
+    required: true
   }
 })
 

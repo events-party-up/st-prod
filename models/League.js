@@ -20,6 +20,17 @@ const LeagueSchema = mongoose.Schema({
   rate: {
     type: Number,
     default: 1
+  },
+  gender: {
+    type: String,
+    required: true
+  },
+  rules_url: {
+    type: String
+  },
+  season: {
+    type: Number,
+    required: true
   }
 })
 
@@ -29,8 +40,9 @@ module.exports.getById = function(id, callback) {
   League.findById(id, callback);
 }
 
-module.exports.getAll = function(tournament, callback) {
-  League.find({tournament: tournament},callback);
+module.exports.getAll = function(options, callback) {
+  console.log(options);
+  League.find(options,callback);
 }
 
 module.exports.create = function(newLeague, callback) {

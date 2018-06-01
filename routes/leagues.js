@@ -55,9 +55,11 @@ router.put('/', auth.isLogged, (req, res) => {
   });
 });
 
-// returns all leagues from the database
-router.get('/all/:tournament', auth.isLogged, (req, res) => {
-  League.getAll(req.params.tournament, (err, leagues) => {
+router.get('/all/:tournament?/:male?', (req, res) => {
+  let options = {};
+  if(req.params.tournament) options.tournament = req.params.tournament;
+  if(req.params.gender) options.gender = req.params.gender;
+  League.getAll(options, (err, leagues) => {
     if (err) res.json({
       success: false,
       message: err
@@ -69,7 +71,21 @@ router.get('/all/:tournament', auth.isLogged, (req, res) => {
   })
 });
 
-router.get('/:id', auth.isLogged, (req, res) => {
+// // returns all leagues from the database
+// router.get('/all/:tournament', auth.isLogged, (req, res) => {
+//   League.getAll({tournament: req.params.tournament}, (err, leagues) => {
+//     if (err) res.json({
+//       success: false,
+//       message: err
+//     });
+//     res.json({
+//       success: true,
+//       all: leagues
+//     });
+//   })
+// });
+
+router.get('/:id', (req, res) => {
   League.getById(req.params.id, (err, league) => {
     if (err) res.json({
       success: false,
