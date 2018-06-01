@@ -1,7 +1,7 @@
 module.exports = {
   // DATABASE: 'mongodb://localhost/stalotenisas',
   DATABASE: 'mongodb://eqls:abrikosas2@ds245238.mlab.com:45238/sandbox',
-  PORT: '3000',
+  PORT: '8080',
   JWT_SECRET: 'secretvery',
   //Ratings config
   STRONGER_DIFF: [
