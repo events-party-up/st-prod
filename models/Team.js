@@ -14,9 +14,7 @@ const TeamSchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'League'
   },
-  court_loc: {
-    type: String
-  },
+  court_loc: String,
   points: Number,
   won: Number,
   lost: Number,

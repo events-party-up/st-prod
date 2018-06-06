@@ -27,6 +27,10 @@ const DivisionSchema = mongoose.Schema({
       default: 0
     }
   }],
+  show_pp: {
+    type: Boolean,
+    default: false
+  },
   league: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'League'
@@ -36,10 +40,6 @@ const DivisionSchema = mongoose.Schema({
     required: true
   },
   tournament: {
-    type: Boolean,
-    default: false
-  },
-  duo: {
     type: Boolean,
     default: false
   },
