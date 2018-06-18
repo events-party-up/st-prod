@@ -13,10 +13,10 @@ const EventSchema = mongoose.Schema({
     type: Date,
     required: true
   },
-  division: {
+  division: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Division'
-  },
+  }],
   location: {
     type: String,
   },

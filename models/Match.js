@@ -72,7 +72,10 @@ const MatchSchema = mongoose.Schema({
   date: Date,
   finished: false,
   absent: String,
-  location: String
+  location: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Location'
+  }
 })
 
 const Match = module.exports = mongoose.model('Match', MatchSchema);
@@ -110,6 +113,42 @@ module.exports.getById = function (id, callback) {
     .populate({
       model: 'Team',
       path: 'away.team'
+    })
+    .populate({
+      model: 'Player',
+      path: 'home.player'
+    })
+    .populate({
+      model: 'Player',
+      path: 'away.player'
+    });
+}
+
+module.exports.getByDivisionIds = function (ids, callback) {
+  Match.find({ division: { "$in": ids } }, callback)
+    .populate({
+      model: 'Division',
+      path: 'division',
+      populate: {
+        path: 'league',
+        model: 'League'
+      }
+    })
+    .populate({
+      model: 'Team',
+      path: 'home.team',
+      populate: {
+        path: 'players',
+        model: 'Player'
+      }
+    })
+    .populate({
+      model: 'Team',
+      path: 'away.team',
+      populate: {
+        path: 'players',
+        model: 'Player'
+      }
     })
     .populate({
       model: 'Player',
@@ -204,25 +243,9 @@ module.exports.getByPlayerId = function (id, callback) {
 
 module.exports.getByDivisionId = function (id, callback) {
   Match.find({
-    'division': id
+    'division': mongoose.Types.ObjectId(id) 
   }, callback)
     .sort({ date: 1 })
-    // .populate({
-    //   model: 'Player',
-    //   path: 'pvp.home.player',
-    // })
-    // .populate({
-    //   model: 'Player',
-    //   path: 'pvp.away.player',
-    // })
-    // .populate({
-    //   model: 'Player',
-    //   path: 'pvp.home.player2',
-    // })
-    // .populate({
-    //   model: 'Player',
-    //   path: 'pvp.away.player2',
-    // })
     .populate({
       model: 'Division',
       path: 'division',
@@ -254,8 +277,12 @@ module.exports.getByDivisionId = function (id, callback) {
     .populate({
       model: 'Player',
       path: 'away.player'
+    })    
+    .populate({
+      model: 'Location',
+      path: 'location'
     });
-    
+
 }
 
 module.exports.getAll = function (callback) {

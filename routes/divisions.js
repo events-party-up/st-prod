@@ -11,6 +11,7 @@ router.post('/', auth.isLogged, (req, res) => {
   let newDivision = new Division({
     ...req.body
   });
+  console.log(newDivision);
   Division.create(newDivision, (err, division) => {
     if (err) {
       res.json({
@@ -249,8 +250,7 @@ processDivisions = (divisions, callback) => {
   });
 }
 
-router.get('/byleague/:id/:byseason?', (req, res) => {
-  console.log(req.params.id)
+router.get('/byleague/:id/:default_filtering?/:season?', (req, res) => {
   League.getById(req.params.id, (err, league) => {
     Division.getByLeagueId(req.params.id, (err, divisions) => {
       if (err) {
@@ -267,8 +267,12 @@ router.get('/byleague/:id/:byseason?', (req, res) => {
         }
         else {
           let divs = [...divisions];
-          if(league.season && req.params.byseason) {
+          console.log(req.params.default_filtering)
+          if(req.params.default_filtering === 'null' && league.season && !req.params.season) {
             divs = divisions.filter(x => x.season && x.season === league.season);
+            console.log('passed')
+          } else if(league.season && req.params.season) {
+            divs = divisions.filter(x => x.season && x.season === parseInt(req.params.season));
           }
           processDivisions(divs, divisions => {
             res.json({

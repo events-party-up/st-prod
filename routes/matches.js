@@ -2,8 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Moment = require('moment');
 const MomentRange = require('moment-range');
-
 const moment = MomentRange.extendMoment(Moment);
+const async = require('async')
 
 const Match = require('../models/Match');
 const auth = require('../middlewares/auth');
@@ -107,31 +107,23 @@ router.get('/bydivision/:id', (req, res) => {
         message: err
       });
     } else {
-      let count = 0;
-      if(matches.length === 0) {
+      async.each(matches, (match, callback) => {
+        Match.calcScore(match, updatedMatch => {
+          match = updatedMatch;
+        });
+        callback();
+      }, err => {
         res.json({
           success: true,
           all: matches
-        });
-      }
-      matches.forEach(match => {
-        Match.calcScore(match, updatedMatch => {
-          match = updatedMatch;
-          count++;
-          if(count === matches.length) {
-            res.json({
-              success: true,
-              all: matches
-            });
-          }
-        });
+        })
       });
     }
   })
 });
 
-router.get('/bydatendiv/:id/:start/:end', (req, res) => {
-  Match.getByDivisionId(req.params.id, (err, matches) => {
+router.get('/bydatendiv/:start/:end', (req, res) => {
+  Match.getByDivisionIds(req.query.divisions.split(','), (err, matches) => {
     let startDate = new Date(req.params.start)
     , endDate   = new Date(req.params.end)
     , range = moment().range(startDate, endDate);
