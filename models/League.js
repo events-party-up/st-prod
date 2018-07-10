@@ -41,17 +41,12 @@ module.exports.getById = function(id, callback) {
 }
 
 module.exports.getAll = function(options, callback) {
-  console.log(options);
   League.find(options,callback);
 }
 
-module.exports.create = function(newLeague, callback) {
-  newLeague.save(callback);
-}
-
-module.exports.update = function(league, callback) {
-  League.findByIdAndUpdate(league._id, { $set: league }, { new: true }, callback);
-}
+// module.exports.update = function(league, callback) {
+//   League.findByIdAndUpdate(league._id, { $set: league }, { new: true }, callback);
+// }
 
 module.exports.delete = function(id, callback) {
   League.findByIdAndRemove(id, (err, league) => {

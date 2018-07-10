@@ -58,15 +58,3 @@ module.exports.getAll = function(callback) {
 module.exports.getFree = function(callback) {
   Player.find({ "inTeam": false }, callback);
 }
-
-module.exports.create = function(newPlayer, callback) {
-  newPlayer.save(callback);
-}
-
-module.exports.delete = function(id, callback) {
-  Player.findByIdAndRemove(id, callback);
-}
-
-module.exports.update = function(player, callback) {
-  Player.findByIdAndUpdate(player._id, { $set: player }, { new: true }, callback);
-}

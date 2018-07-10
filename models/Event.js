@@ -17,6 +17,11 @@ const EventSchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Division'
   }],
+  tournament: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Tournament'
+  },
+  type: String,
   location: {
     type: String,
   },
@@ -32,34 +37,3 @@ const EventSchema = mongoose.Schema({
 
 const Event = module.exports = mongoose.model('Event', EventSchema);
 
-module.exports.getById = function(id, callback) {
-  Event.findById(id, callback)
-  .populate({
-    model: 'Division',
-    path: 'division',
-    populate: {
-      path: 'league',
-      model: 'League'
-    }
-  });
-}
-
-module.exports.getAll = function(callback) {
-  Event.find(callback)
-    .populate({
-      model: 'Division',
-      path: 'division'
-    });
-}
-
-module.exports.create = function(newEvent, callback) {
-  newEvent.save(callback);
-}
-
-module.exports.delete = function(id, callback) {
-  Event.findByIdAndRemove(id, callback);
-}
-
-module.exports.update = function(event, callback) {
-  Event.findByIdAndUpdate(event._id, { $set: event }, { new: true }, callback);
-}

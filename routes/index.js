@@ -1,24 +1,15 @@
 const express = require('express');
 const router = express.Router();
 
-const users = require('./users')
-const players = require('./players')
-const leagues = require('./leagues')
-const teams = require('./teams')
-const divisions = require('./divisions')
-const matches = require('./matches')
-const events = require('./events')
-const teamregs = require('./teamregs')
-const locations = require('./locations')
-
-router.use('/leagues', leagues);
-router.use('/users', users);
-router.use('/players', players);
-router.use('/teams', teams);
-router.use('/divisions', divisions);
-router.use('/matches', matches);
-router.use('/events', events);
-router.use('/teamregs', teamregs);
-router.use('/locations', locations);
+router.use('/league', require('./league'));
+router.use('/user', require('./user'));
+router.use('/player', require('./player'));
+router.use('/team', require('./team'));
+router.use('/division', require('./division'));
+router.use('/match', require('./match'));
+router.use('/event', require('./event'));
+router.use('/teamreg', require('./teamreg'));
+router.use('/location', require('./location'));
+router.use('/tournament', require('./tournament'));
 
 module.exports = router;

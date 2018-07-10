@@ -51,21 +51,6 @@ const DivisionSchema = mongoose.Schema({
 
 const Division = module.exports = mongoose.model('Division', DivisionSchema);
 
-module.exports.getById = function(id, callback) {
-  Division.findById(id, callback).populate({
-    model: 'Team',
-    path: 'teams',
-    populate: {
-      path: 'players',
-      model: 'Player'
-    }
-  })
-  .populate({
-    model: 'Player',
-    path: 'players'
-  });
-}
-
 module.exports.getByLeagueId = function(id, callback) {
   Division.find({
     'league' : id
@@ -96,19 +81,3 @@ module.exports.getAll = function(callback) {
   });
 }
 
-module.exports.create = function(newDivision, callback) {
-  newDivision.save(callback);
-}
-
-module.exports.update = function(division, callback) {
-  Division.findByIdAndUpdate(division._id, { $set: division }, { new: true }, callback);
-}
-
-module.exports.delete = function(id, callback) {
-  Division.findByIdAndRemove(id, (err, division) => {
-    if(err) callback(err, null);
-    Match.remove({ division : id }, (err,removed) => {
-      callback(err, removed);
-   });
-  });
-}

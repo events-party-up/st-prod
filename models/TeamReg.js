@@ -1,30 +1,12 @@
 const mongoose = require('mongoose');
 
 const TeamRegSchema = mongoose.Schema({
-  name: {
-    type: String,
-    required: true
-  },
+  team: String,
   players: [{
-    first_name: {
-      type: String,
-      required: true
-    },
-      last_name: {
-      type: String,
-      required: true
-    }
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Player'
   }],
-  team_captain: {
-    first_name: {
-      type: String,
-      required: true
-    },
-    last_name: {
-      type: String,
-      required: true
-    }
-  },
+  team_captain: String,
   league: {
     type: String,
     required: true
@@ -40,23 +22,3 @@ const TeamRegSchema = mongoose.Schema({
 });
 
 const TeamReg = module.exports = mongoose.model('TeamReg', TeamRegSchema);
-
-module.exports.getById = function(id, callback) {
-  TeamReg.findById(id, callback);
-}
-
-module.exports.getAll = function(callback) {
-  TeamReg.find(callback);
-}
-
-module.exports.create = function(newTeamReg, callback) {
-  newTeamReg.save(callback);
-}
-
-module.exports.delete = function(id, callback) {
-  TeamReg.findByIdAndRemove(id, callback);
-}
-
-module.exports.update = function(teamReg, callback) {
-  TeamReg.findByIdAndUpdate(teamReg._id, { $set: teamReg }, { new: true }, callback);
-}

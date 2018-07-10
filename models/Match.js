@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
 
 const MatchSchema = mongoose.Schema({
   division: {
@@ -78,6 +77,38 @@ const MatchSchema = mongoose.Schema({
   }
 })
 
+let autoPopulate = function(next) {
+  this.populate([
+    {
+    path: 'players',
+  },
+  {
+    path: 'teams',
+    populate: {
+      path: 'players',
+    }
+  },
+  {
+    path: 'brackets.matches.data',
+    populate: {
+      path: 'home.player away.player'
+    },
+    populate: {
+      path: 'pvp.home.player pvp.away.player pvp.home.player2 pvp.away.player2',
+    },
+    populate: {
+      path: 'away.team home.team ',
+      populate: {
+        path: 'players',
+      },
+    },
+  }])
+  next();
+};
+
+MatchSchema.pre('findByIdAndUpdate', autoPopulate)
+MatchSchema.pre('findById', autoPopulate)
+
 const Match = module.exports = mongoose.model('Match', MatchSchema);
 
 module.exports.getById = function (id, callback) {
@@ -98,7 +129,7 @@ module.exports.getById = function (id, callback) {
       model: 'Player',
       path: 'pvp.away.player2',
     })
-    .populate({
+    .populate({//done
       model: 'Division',
       path: 'division',
       populate: {
@@ -328,10 +359,6 @@ module.exports.getAll = function (callback) {
       model: 'Player',
       path: 'away.player'
     });
-}
-
-module.exports.create = function (newMatch, callback) {
-  newMatch.save(callback);
 }
 
 module.exports.update = function (match, callback) {
