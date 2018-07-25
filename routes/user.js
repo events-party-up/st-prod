@@ -17,15 +17,15 @@ router.post('/register', middleware.auth, middleware.admin, (req, res) => {
 });
 
 router.post("/auth", (req, res, next) => {
-  if (req.body.credentials.email !== null || req.body.credentials.password !== null) {
-    let email = req.body.credentials.email;
-    let password = req.body.credentials.password;
+  let email = req.body.credentials.email,
+    password = req.body.credentials.password
+  if (email !== null && password !== null) {
     model.User.getByEmail(email, function (err, result) {
+      if (err) return next(err)
+      if (!result) return next("User not found!")
       let user = result._doc
-      if (err) next(err);
-      if (!user) next("User not found!")
       model.User.comparePassword(password, user.password, function (err, isMatch) {
-        if (err) next(err);
+        if (err) return next(err);
         if (isMatch) {
           user.password = undefined;
           user.created = undefined;
@@ -37,12 +37,12 @@ router.post("/auth", (req, res, next) => {
             token
           });
         } else {
-          next("Incorrect password!");
+          return next("Incorrect password!");
         }
       });
     });
   } else {
-    next("Missing credentials")
+    return next("Missing credentials")
   }
 });
 

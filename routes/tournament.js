@@ -28,6 +28,9 @@ const popConf = {
         path: 'players',
       },
     }],
+  },
+  {
+    path: 'divisions.players divisions.teams',
   }
   ],
 }

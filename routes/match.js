@@ -20,6 +20,57 @@ router.put("/",
     rest.update(req, res, next, model.Match)
   })
 
+router.get("/bytournament/:tid",
+  (req, res, next) => {
+    rest.get(req, res, next, model.Match, {
+      find: {
+        tournament_id: req.params.tid
+      },
+      populate: [
+        {
+          model: 'Player',
+          path: 'pvp.home.player',
+        },
+        {
+          model: 'Player',
+          path: 'pvp.away.player',
+        },
+        {
+          model: 'Player',
+          path: 'pvp.home.player2',
+        },
+        {
+          model: 'Player',
+          path: 'pvp.away.player2',
+        },
+        {
+          model: 'Division',
+          path: 'division',
+          populate: {
+            path: 'league',
+            model: 'League'
+          }
+        },
+        {
+          model: 'Team',
+          path: 'home.team'
+        },
+        {
+          model: 'Team',
+          path: 'away.team'
+        },
+        {
+          model: 'Player',
+          path: 'home.player'
+        },
+        {
+          model: 'Player',
+          path: 'away.player'
+        }
+      ]
+    })
+  })
+
 router.get("/:id",
   (req, res, next) => {
     rest.get(req, res, next, model.Match, {
@@ -116,8 +167,8 @@ router.get('/bydatendiv/:start/:end', (req, res, next) => {
     let list = [];
     if (err) next(err)
     let count = 0;
-    if (matches.length === 0) {
-      res.json(matches);
+    if (!matches || matches.length === 0) {
+      return next('Resource not found');
     }
     matches.forEach(match => {
       if (range.contains(new Date(match.date))) {

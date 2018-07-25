@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require('mongoose')
 
 var TournamentSchema = new mongoose.Schema({
   name: {
@@ -29,19 +29,26 @@ var TournamentSchema = new mongoose.Schema({
     type: String,
     default: 'single'
   },
-  brackets: [{
-    size: {
-      type: Number,
-      default: 8
-    },
-    matches: [{
-      position: Number,
-      data: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Match'
-      }
-    }]
-  }]
+  divisions_included: {
+    type: Boolean,
+    default: false
+  },
+  split_size: {
+    type: Number,
+    default: 3
+  },
+  divisions: [mongoose.model('Division').schema],
+  size: {
+    type: Number,
+    default: 16
+  },
+  brackets: [[{
+    position: Number,
+    data: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Match'
+    }
+  }]]
 });
 
 module.exports = Tournament = mongoose.model('Tournament', TournamentSchema);

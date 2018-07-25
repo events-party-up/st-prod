@@ -5,6 +5,9 @@ const MatchSchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Division'
   },
+  tournament_id: {
+    type: mongoose.Schema.Types.ObjectId,
+  },
   home: {
     team: {
       type: mongoose.Schema.Types.ObjectId,
@@ -77,32 +80,32 @@ const MatchSchema = mongoose.Schema({
   }
 })
 
-let autoPopulate = function(next) {
+let autoPopulate = function (next) {
   this.populate([
     {
-    path: 'players',
-  },
-  {
-    path: 'teams',
-    populate: {
       path: 'players',
-    }
-  },
-  {
-    path: 'brackets.matches.data',
-    populate: {
-      path: 'home.player away.player'
     },
-    populate: {
-      path: 'pvp.home.player pvp.away.player pvp.home.player2 pvp.away.player2',
-    },
-    populate: {
-      path: 'away.team home.team ',
+    {
+      path: 'teams',
       populate: {
         path: 'players',
-      },
+      }
     },
-  }])
+    {
+      path: 'brackets.matches.data',
+      populate: {
+        path: 'home.player away.player'
+      },
+      populate: {
+        path: 'pvp.home.player pvp.away.player pvp.home.player2 pvp.away.player2',
+      },
+      populate: {
+        path: 'away.team home.team ',
+        populate: {
+          path: 'players',
+        },
+      },
+    }])
   next();
 };
 
@@ -274,7 +277,7 @@ module.exports.getByPlayerId = function (id, callback) {
 
 module.exports.getByDivisionId = function (id, callback) {
   Match.find({
-    'division': mongoose.Types.ObjectId(id) 
+    'division': mongoose.Types.ObjectId(id)
   }, callback)
     .sort({ date: 1 })
     .populate({
@@ -308,7 +311,7 @@ module.exports.getByDivisionId = function (id, callback) {
     .populate({
       model: 'Player',
       path: 'away.player'
-    })    
+    })
     .populate({
       model: 'Location',
       path: 'location'
